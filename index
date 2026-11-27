@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>오늘의 학식 메뉴 실시간 투표소</title>
+  <style>
+    :root {
+      --primary: #1d4ed8;
+      --primary-hover: #1e40af;
+      --primary-light: #eff6ff;
+      --secondary: #3b82f6;
+      --sky: #60a5fa;
+      --dark-blue: #0f172a;
+      --navy: #1e3a8a;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --radius: 16px;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --shadow-md: 0 10px 25px -5px rgba(29, 78, 216, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+      --shadow-card: 0 4px 12px rgba(15, 23, 42, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      line-height: 1.5;
+      font-size: 18px;
+      word-break: keep-all;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 헤더 영역 */
+    header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 45%, #2563eb 100%);
+      color: #ffffff;
+      padding: 3rem 1.25rem 2.5rem;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 4px 20px rgba(30, 58, 138, 0.2);
+    }
+
+    .badge-date {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      backdrop-filter: blur(8px);
+      padding: 0.4rem 1.1rem;
+      border-radius: 9999px;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.9rem;
+      letter-spacing: -0.01em;
+    }
+
+    header h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      font-size: 1.2rem;
+      opacity: 0.9;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* 메인 컨테이너 */
+    main {
+      flex: 1;
+      width: 100%;
+      max-width: 720px;
+      margin: -1.25rem auto 2.5rem;
+      padding: 0 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* 카드 공통 스타일 */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid rgba(203, 213, 225, 0.8);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      box-shadow: var(--shadow-card);
+      transition: transform 0.2s ease;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+    }
+
+    .card-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--dark-blue);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* 메뉴 선택 리스트 */
+    .menu-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .menu-card {
+      position: relative;
+      border: 2px solid var(--border);
+      background-color: #ffffff;
+      border-radius: 14px;
+      padding: 1.25rem 1.4rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .menu-card:hover {
+      border-color: var(--secondary);
+      background-color: var(--primary-light);
+      transform: translateY(-2px);
+    }
+
+    .menu-card.selected {
+      border-color: var(--primary);
+      background-color: #eff6ff;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    }
+
+    .menu-info {
+      flex: 1;
+    }
+
+    .menu-tag {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--primary);
+      background-color: #dbeafe;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      display: inline-block;
+      margin-bottom: 0.35rem;
+    }
+
+    .menu-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--dark-blue);
+      margin-bottom: 0.2rem;
+    }
+
+    .menu-desc {
+      font-size: 1rem;
+      color: var(--text-muted);
+    }
+
+    .radio-circle {
+      width: 26px;
+      height: 26px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: #ffffff;
+      transition: all 0.2s ease;
+    }
+
+    .menu-card.selected .radio-circle {
+      border-color: var(--primary);
+      background: var(--primary);
+    }
+
+    .radio-circle svg {
+      display: none;
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: #ffffff;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .menu-card.selected .radio-circle svg {
+      display: block;
+    }
+
+    /* 버튼 영역 */
+    .btn {
+      width: 100%;
+      font-size: 1.25rem;
+      font-weight: 700;
+      padding: 1rem;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      letter-spacing: -0.01em;
+    }
+
+    .btn-vote {
+      margin-top: 1.25rem;
+      background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    }
+
+    .btn-vote:hover {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+      transform: translateY(-1px);
+    }
+
+    .btn-vote:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+    }
+
+    .btn-reset {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 0.45rem 0.85rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-reset:hover {
+      background: #fee2e2;
+      border-color: #fca5a5;
+      color: #ef4444;
+    }
+
+    /* 알림 토스트 메시지 */
+    .toast-box {
+      min-height: 28px;
+      margin-top: 0.85rem;
+      text-align: center;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--primary);
+      transition: opacity 0.3s ease;
+    }
+
+    /* 실시간 막대 그래프 영역 */
+    .chart-box {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .bar-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .bar-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 1.15rem;
+    }
+
+    .bar-label-name {
+      font-weight: 700;
+      color: var(--dark-blue);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .bar-label-stats {
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 1.15rem;
+    }
+
+    .bar-votes-count {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-left: 0.4rem;
+    }
+
+    .track {
+      width: 100%;
+      height: 32px;
+      background-color: #e2e8f0;
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 16px;
+      width: 0%;
+      background: linear-gradient(90deg, #60a5fa 0%, #2563eb 60%, #1d4ed8 100%);
+      transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+    }
+
+    .bar-fill.leading {
+      background: linear-gradient(90deg, #38bdf8 0%, #2563eb 50%, #1e40af 100%);
+    }
+
+    .total-counter {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 1.25rem;
+      margin-top: 0.5rem;
+      border-top: 1px solid #f1f5f9;
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .total-number {
+      font-size: 1.35rem;
+      color: var(--primary);
+      font-weight: 800;
+    }
+
+    /* 반응형 스타일 */
+    @media (max-width: 600px) {
+      header {
+        padding: 2.25rem 1rem 2rem;
+      }
+
+      header h1 {
+        font-size: 1.85rem;
+      }
+
+      header p {
+        font-size: 1.05rem;
+      }
+
+      .card {
+        padding: 1.25rem;
+      }
+
+      .card-title {
+        font-size: 1.35rem;
+      }
+
+      .menu-title {
+        font-size: 1.2rem;
+      }
+
+      .menu-desc {
+        font-size: 0.95rem;
+      }
+
+      .track {
+        height: 28px;
+      }
+
+      .bar-label-row {
+        font-size: 1.05rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="badge-date" id="currentDateBadge">
+      <span>🍴</span> <span id="currentDateText">2026년 11월 27일</span>
+    </div>
+    <h1>오늘 뭐 먹지?</h1>
+    <p>가장 먹고 싶은 학식 메뉴를 골라주세요. 실시간으로 집계됩니다!</p>
+  </header>
+
+  <main>
+    <!-- 투표 카드 -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title">오늘의 3대 메뉴 선택</h2>
+      </div>
+
+      <div class="menu-list" id="menuList">
+        <!-- 메뉴 1 -->
+        <div class="menu-card" onclick="selectMenu(0)">
+          <div class="menu-info">
+            <span class="menu-tag">한식/분식 베스트</span>
+            <div class="menu-title">1. 바삭 수제 돈까스 & 매콤 쫄면</div>
+            <div class="menu-desc">두툼한 국내산 등심 돈까스와 새콤달콤 쫄면의 꿀조합</div>
+          </div>
+          <div class="radio-circle">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+        </div>
+
+        <!-- 메뉴 2 -->
+        <div class="menu-card" onclick="selectMenu(1)">
+          <div class="menu-info">
+            <span class="menu-tag">인기 덮밥</span>
+            <div class="menu-title">2. 직화 불맛 제육덮밥 & 계란국</div>
+            <div class="menu-desc">불향 가득한 매콤 제육볶음에 맑고 따뜻한 파송송 계란국</div>
+          </div>
+          <div class="radio-circle">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+        </div>
+
+        <!-- 메뉴 3 -->
+        <div class="menu-card" onclick="selectMenu(2)">
+          <div class="menu-info">
+            <span class="menu-tag">든든 뚝배기</span>
+            <div class="menu-title">3. 차돌박이 된장찌개 & 비빔밥</div>
+            <div class="menu-desc">구수한 차돌 된장뚝배기와 신선한 5색 나물 보리비빔밥</div>
+          </div>
+          <div class="radio-circle">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-vote" onclick="castVote()">
+        <span>투표하기</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+      <div class="toast-box" id="toastMessage"></div>
+    </section>
+
+    <!-- 실시간 집계 카드 -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title">📊 실시간 투표 현황</h2>
+        <button class="btn-reset" onclick="confirmResetVotes()">데이터 초기화</button>
+      </div>
+
+      <div class="chart-box" id="chartContainer">
+        <!-- 막대 그래프 동적 렌더링 -->
+      </div>
+
+      <div class="total-counter">
+        <span>현재 참여 인원</span>
+        <span class="total-number" id="totalVotes">0표</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = 'univ_cafeteria_voting_data';
+
+    const menuData = [
+      { id: 0, title: "1. 수제 돈까스 & 쫄면", icon: "🍱" },
+      { id: 1, title: "2. 직화 제육덮밥", icon: "🥩" },
+      { id: 2, title: "3. 차돌된장찌개 & 비빔밥", icon: "🍲" }
+    ];
+
+    let selectedIndex = null;
+
+    // 오늘 날짜 표기 세팅
+    function initDate() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      const date = now.getDate();
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      const day = days[now.getDay()];
+      document.getElementById('currentDateText').textContent = `${year}년 ${month}월 ${date}일 (${day})`;
+    }
+
+    // 투표 데이터 불러오기
+    function loadVotes() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length === 3) {
+            return parsed;
+          }
+        } catch (e) {
+          console.error("데이터 복원 오류:", e);
+        }
+      }
+      return [0, 0, 0];
+    }
+
+    // 투표 데이터 저장
+    function persistVotes(votes) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(votes));
+      renderChart();
+    }
+
+    // 메뉴 선택 핸들러
+    function selectMenu(index) {
+      selectedIndex = index;
+      const cards = document.querySelectorAll('.menu-card');
+      cards.forEach((card, idx) => {
+        if (idx === index) {
+          card.classList.add('selected');
+        } else {
+          card.classList.remove('selected');
+        }
+      });
+      showToast('');
+    }
+
+    // 투표 제출
+    function castVote() {
+      if (selectedIndex === null) {
+        showToast('투표하실 메뉴를 먼저 터치해 주세요!', '#ef4444');
+        return;
+      }
+
+      const votes = loadVotes();
+      votes[selectedIndex] += 1;
+      persistVotes(votes);
+
+      const targetTitle = menuData[selectedIndex].title;
+      showToast(`'${targetTitle}'에 소중한 한 표가 반영되었습니다! 🎉`, 'var(--primary)');
+    }
+
+    // 차트 렌더링
+    function renderChart() {
+      const votes = loadVotes();
+      const total = votes.reduce((acc, cur) => acc + cur, 0);
+      const container = document.getElementById('chartContainer');
+      const maxVote = Math.max(...votes);
+
+      container.innerHTML = menuData.map((menu, i) => {
+        const count = votes[i];
+        const percent = total > 0 ? Math.round((count / total) * 100) : 0;
+        const isLeading = total > 0 && count === maxVote && count > 0;
+
+        return `
+          <div class="bar-item">
+            <div class="bar-label-row">
+              <span class="bar-label-name">
+                <span>${menu.icon}</span>
+                <span>${escapeHtml(menu.title)}</span>
+              </span>
+              <span class="bar-label-stats">
+                ${percent}%
+                <span class="bar-votes-count">(${count}표)</span>
+              </span>
+            </div>
+            <div class="track">
+              <div 
+                class="bar-fill ${isLeading ? 'leading' : ''}" 
+                style="width: ${percent}%;"
+                title="${count}표"
+              ></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('totalVotes').textContent = `${total.toLocaleString()}표`;
+    }
+
+    // 알림 메시지 제어
+    function showToast(message, color = 'var(--primary)') {
+      const toast = document.getElementById('toastMessage');
+      toast.style.color = color;
+      toast.textContent = message;
+    }
+
+    // 결과 초기화
+    function confirmResetVotes() {
+      const sure = window.confirm("투표 결과를 모두 0으로 초기화할까요?");
+      if (sure) {
+        persistVotes([0, 0, 0]);
+        selectedIndex = null;
+        document.querySelectorAll('.menu-card').forEach(card => card.classList.remove('selected'));
+        showToast('결과가 깨끗하게 리셋되었습니다.', 'var(--text-muted)');
+      }
+    }
+
+    // HTML 태그 이스케이프 유틸
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.innerText = str;
+      return div.innerHTML;
+    }
+
+    // 초기 실행
+    document.addEventListener('DOMContentLoaded', () => {
+      initDate();
+      renderChart();
+    });
+  </script>
+</body>
+</html>
