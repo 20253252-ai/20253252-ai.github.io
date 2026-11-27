@@ -1,629 +1,244 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>오늘의 학식 메뉴 실시간 투표소</title>
-  <style>
-    :root {
-      --primary: #1d4ed8;
-      --primary-hover: #1e40af;
-      --primary-light: #eff6ff;
-      --secondary: #3b82f6;
-      --sky: #60a5fa;
-      --dark-blue: #0f172a;
-      --navy: #1e3a8a;
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --border: #cbd5e1;
-      --text-main: #0f172a;
-      --text-muted: #475569;
-      --radius: 16px;
-      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-      --shadow-md: 0 10px 25px -5px rgba(29, 78, 216, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
-      --shadow-card: 0 4px 12px rgba(15, 23, 42, 0.06);
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D-Day 과제 플래너</title>
+<style>
+  :root {
+    --navy: #0b2a5b;
+    --blue: #1559c7;
+    --sky: #dce8fb;
+    --bg: #f4f7fc;
+    --text: #12233f;
+    --muted: #55657e;
+    --red: #c43b3b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  header { background: var(--navy); color: #fff; padding: 28px 16px 20px; text-align: center; }
+  header h1 { margin: 0 0 6px; font-size: 1.9rem; }
+  header p { margin: 0; color: #c9daf2; }
+  main { max-width: 680px; margin: 20px auto 40px; padding: 0 16px; }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      -webkit-tap-highlight-color: transparent;
-    }
+  .panel { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 4px 14px rgba(11, 42, 91, 0.08); margin-bottom: 16px; }
+  form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  form .full { grid-column: 1 / -1; }
+  label { font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 4px; }
+  input, select, button { width: 100%; font: inherit; font-size: 1.05rem; padding: 12px; border-radius: 10px; border: 1px solid #c5d4ea; }
+  button { background: var(--blue); color: #fff; border: none; cursor: pointer; font-weight: 700; }
+  button:hover { filter: brightness(1.1); }
+  .error { color: var(--red); font-size: 0.9rem; min-height: 1.2em; margin: 6px 0 0; }
 
-    body {
-      background-color: var(--bg);
-      color: var(--text-main);
-      line-height: 1.5;
-      font-size: 18px;
-      word-break: keep-all;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+  .progress-text { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 8px; }
+  .bar { height: 14px; background: var(--sky); border-radius: 999px; overflow: hidden; }
+  .bar > div { height: 100%; width: 0; background: var(--blue); transition: width 0.4s; }
 
-    /* 헤더 영역 */
-    header {
-      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 45%, #2563eb 100%);
-      color: #ffffff;
-      padding: 3rem 1.25rem 2.5rem;
-      text-align: center;
-      position: relative;
-      box-shadow: 0 4px 20px rgba(30, 58, 138, 0.2);
-    }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 12px; }
+  .chip { width: auto; padding: 6px 14px; border-radius: 999px; background: var(--sky); color: var(--navy); font-size: 0.95rem; }
+  .chip.active { background: var(--navy); color: #fff; }
 
-    .badge-date {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(255, 255, 255, 0.18);
-      border: 1px solid rgba(255, 255, 255, 0.28);
-      backdrop-filter: blur(8px);
-      padding: 0.4rem 1.1rem;
-      border-radius: 9999px;
-      font-size: 1rem;
-      font-weight: 600;
-      margin-bottom: 0.9rem;
-      letter-spacing: -0.01em;
-    }
+  ul { list-style: none; padding: 0; margin: 0; }
+  li {
+    background: #fff; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px;
+    display: flex; gap: 12px; align-items: center;
+    border-left: 8px solid var(--blue); box-shadow: 0 2px 8px rgba(11, 42, 91, 0.06);
+  }
+  li.urgent { border-left-color: var(--red); }
+  li.urgent .dday { color: var(--red); }
+  li.past, li.done { opacity: 0.55; border-left-color: #9aa8bd; }
+  li.done .title { text-decoration: line-through; }
+  li input[type=checkbox] { width: 24px; height: 24px; flex: none; }
+  .info { flex: 1; min-width: 0; }
+  .title { font-weight: 700; overflow-wrap: anywhere; }
+  .meta { color: var(--muted); font-size: 0.9rem; }
+  .dday { font-weight: 800; font-size: 1.35rem; color: var(--blue); min-width: 74px; text-align: right; }
+  .del { width: auto; background: #eef1f6; color: var(--muted); padding: 6px 10px; font-size: 0.9rem; }
+  .empty { text-align: center; color: var(--muted); padding: 24px; }
+  footer { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 16px; }
 
-    header h1 {
-      font-size: 2.25rem;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      margin-bottom: 0.5rem;
-    }
-
-    header p {
-      font-size: 1.2rem;
-      opacity: 0.9;
-      max-width: 500px;
-      margin: 0 auto;
-    }
-
-    /* 메인 컨테이너 */
-    main {
-      flex: 1;
-      width: 100%;
-      max-width: 720px;
-      margin: -1.25rem auto 2.5rem;
-      padding: 0 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
-
-    /* 카드 공통 스타일 */
-    .card {
-      background: var(--card-bg);
-      border: 1px solid rgba(203, 213, 225, 0.8);
-      border-radius: var(--radius);
-      padding: 1.75rem;
-      box-shadow: var(--shadow-card);
-      transition: transform 0.2s ease;
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.25rem;
-    }
-
-    .card-title {
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: var(--dark-blue);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    /* 메뉴 선택 리스트 */
-    .menu-list {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .menu-card {
-      position: relative;
-      border: 2px solid var(--border);
-      background-color: #ffffff;
-      border-radius: 14px;
-      padding: 1.25rem 1.4rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-      box-shadow: var(--shadow-sm);
-    }
-
-    .menu-card:hover {
-      border-color: var(--secondary);
-      background-color: var(--primary-light);
-      transform: translateY(-2px);
-    }
-
-    .menu-card.selected {
-      border-color: var(--primary);
-      background-color: #eff6ff;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-    }
-
-    .menu-info {
-      flex: 1;
-    }
-
-    .menu-tag {
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: var(--primary);
-      background-color: #dbeafe;
-      padding: 0.2rem 0.55rem;
-      border-radius: 6px;
-      display: inline-block;
-      margin-bottom: 0.35rem;
-    }
-
-    .menu-title {
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: var(--dark-blue);
-      margin-bottom: 0.2rem;
-    }
-
-    .menu-desc {
-      font-size: 1rem;
-      color: var(--text-muted);
-    }
-
-    .radio-circle {
-      width: 26px;
-      height: 26px;
-      border: 2px solid var(--border);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      background: #ffffff;
-      transition: all 0.2s ease;
-    }
-
-    .menu-card.selected .radio-circle {
-      border-color: var(--primary);
-      background: var(--primary);
-    }
-
-    .radio-circle svg {
-      display: none;
-      width: 14px;
-      height: 14px;
-      fill: none;
-      stroke: #ffffff;
-      stroke-width: 3;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    .menu-card.selected .radio-circle svg {
-      display: block;
-    }
-
-    /* 버튼 영역 */
-    .btn {
-      width: 100%;
-      font-size: 1.25rem;
-      font-weight: 700;
-      padding: 1rem;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      transition: all 0.2s ease;
-      letter-spacing: -0.01em;
-    }
-
-    .btn-vote {
-      margin-top: 1.25rem;
-      background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
-      color: #ffffff;
-      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
-    }
-
-    .btn-vote:hover {
-      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
-      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
-      transform: translateY(-1px);
-    }
-
-    .btn-vote:active {
-      transform: translateY(1px);
-      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
-    }
-
-    .btn-reset {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      font-weight: 600;
-      padding: 0.45rem 0.85rem;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .btn-reset:hover {
-      background: #fee2e2;
-      border-color: #fca5a5;
-      color: #ef4444;
-    }
-
-    /* 알림 토스트 메시지 */
-    .toast-box {
-      min-height: 28px;
-      margin-top: 0.85rem;
-      text-align: center;
-      font-size: 1.05rem;
-      font-weight: 600;
-      color: var(--primary);
-      transition: opacity 0.3s ease;
-    }
-
-    /* 실시간 막대 그래프 영역 */
-    .chart-box {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-      margin-top: 0.5rem;
-    }
-
-    .bar-item {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .bar-label-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-size: 1.15rem;
-    }
-
-    .bar-label-name {
-      font-weight: 700;
-      color: var(--dark-blue);
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-
-    .bar-label-stats {
-      font-weight: 700;
-      color: var(--primary);
-      font-size: 1.15rem;
-    }
-
-    .bar-votes-count {
-      font-size: 0.95rem;
-      color: var(--text-muted);
-      font-weight: 500;
-      margin-left: 0.4rem;
-    }
-
-    .track {
-      width: 100%;
-      height: 32px;
-      background-color: #e2e8f0;
-      border-radius: 16px;
-      overflow: hidden;
-      position: relative;
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
-    }
-
-    .bar-fill {
-      height: 100%;
-      border-radius: 16px;
-      width: 0%;
-      background: linear-gradient(90deg, #60a5fa 0%, #2563eb 60%, #1d4ed8 100%);
-      transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-      position: relative;
-    }
-
-    .bar-fill.leading {
-      background: linear-gradient(90deg, #38bdf8 0%, #2563eb 50%, #1e40af 100%);
-    }
-
-    .total-counter {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-top: 1.25rem;
-      margin-top: 0.5rem;
-      border-top: 1px solid #f1f5f9;
-      font-size: 1.05rem;
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-
-    .total-number {
-      font-size: 1.35rem;
-      color: var(--primary);
-      font-weight: 800;
-    }
-
-    /* 반응형 스타일 */
-    @media (max-width: 600px) {
-      header {
-        padding: 2.25rem 1rem 2rem;
-      }
-
-      header h1 {
-        font-size: 1.85rem;
-      }
-
-      header p {
-        font-size: 1.05rem;
-      }
-
-      .card {
-        padding: 1.25rem;
-      }
-
-      .card-title {
-        font-size: 1.35rem;
-      }
-
-      .menu-title {
-        font-size: 1.2rem;
-      }
-
-      .menu-desc {
-        font-size: 0.95rem;
-      }
-
-      .track {
-        height: 28px;
-      }
-
-      .bar-label-row {
-        font-size: 1.05rem;
-      }
-    }
-  </style>
+  @media (max-width: 480px) {
+    form { grid-template-columns: 1fr; }
+    .dday { font-size: 1.1rem; min-width: 56px; }
+  }
+</style>
 </head>
 <body>
+<header>
+  <h1>📌 D-Day 과제 플래너</h1>
+  <p>흩어진 마감일을 한 화면에서</p>
+</header>
 
-  <header>
-    <div class="badge-date" id="currentDateBadge">
-      <span>🍴</span> <span id="currentDateText">2026년 11월 27일</span>
-    </div>
-    <h1>오늘 뭐 먹지?</h1>
-    <p>가장 먹고 싶은 학식 메뉴를 골라주세요. 실시간으로 집계됩니다!</p>
-  </header>
-
-  <main>
-    <!-- 투표 카드 -->
-    <section class="card">
-      <div class="card-header">
-        <h2 class="card-title">오늘의 3대 메뉴 선택</h2>
+<main>
+  <section class="panel">
+    <form id="taskForm" novalidate>
+      <div class="full">
+        <label for="title">과제명</label>
+        <input id="title" maxlength="60" placeholder="예: 열역학 실험 보고서">
       </div>
-
-      <div class="menu-list" id="menuList">
-        <!-- 메뉴 1 -->
-        <div class="menu-card" onclick="selectMenu(0)">
-          <div class="menu-info">
-            <span class="menu-tag">한식/분식 베스트</span>
-            <div class="menu-title">1. 바삭 수제 돈까스 & 매콤 쫄면</div>
-            <div class="menu-desc">두툼한 국내산 등심 돈까스와 새콤달콤 쫄면의 꿀조합</div>
-          </div>
-          <div class="radio-circle">
-            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </div>
-        </div>
-
-        <!-- 메뉴 2 -->
-        <div class="menu-card" onclick="selectMenu(1)">
-          <div class="menu-info">
-            <span class="menu-tag">인기 덮밥</span>
-            <div class="menu-title">2. 직화 불맛 제육덮밥 & 계란국</div>
-            <div class="menu-desc">불향 가득한 매콤 제육볶음에 맑고 따뜻한 파송송 계란국</div>
-          </div>
-          <div class="radio-circle">
-            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </div>
-        </div>
-
-        <!-- 메뉴 3 -->
-        <div class="menu-card" onclick="selectMenu(2)">
-          <div class="menu-info">
-            <span class="menu-tag">든든 뚝배기</span>
-            <div class="menu-title">3. 차돌박이 된장찌개 & 비빔밥</div>
-            <div class="menu-desc">구수한 차돌 된장뚝배기와 신선한 5색 나물 보리비빔밥</div>
-          </div>
-          <div class="radio-circle">
-            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </div>
-        </div>
+      <div>
+        <label for="subject">과목</label>
+        <input id="subject" maxlength="20" placeholder="예: 열역학">
       </div>
-
-      <button class="btn btn-vote" onclick="castVote()">
-        <span>투표하기</span>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="9 18 15 12 9 6"></polyline>
-        </svg>
-      </button>
-      <div class="toast-box" id="toastMessage"></div>
-    </section>
-
-    <!-- 실시간 집계 카드 -->
-    <section class="card">
-      <div class="card-header">
-        <h2 class="card-title">📊 실시간 투표 현황</h2>
-        <button class="btn-reset" onclick="confirmResetVotes()">데이터 초기화</button>
+      <div>
+        <label for="due">마감일</label>
+        <input id="due" type="date">
       </div>
+      <div class="full"><button type="submit">추가하기</button></div>
+    </form>
+    <p class="error" id="error" role="alert"></p>
+  </section>
 
-      <div class="chart-box" id="chartContainer">
-        <!-- 막대 그래프 동적 렌더링 -->
-      </div>
+  <section class="panel">
+    <div class="progress-text"><span>완료율</span><span id="progressLabel">0 / 0 (0%)</span></div>
+    <div class="bar"><div id="progressBar"></div></div>
+  </section>
 
-      <div class="total-counter">
-        <span>현재 참여 인원</span>
-        <span class="total-number" id="totalVotes">0표</span>
-      </div>
-    </section>
-  </main>
+  <div class="filters" id="filters"></div>
+  <ul id="list"></ul>
+</main>
 
-  <script>
-    const STORAGE_KEY = 'univ_cafeteria_voting_data';
+<footer>이 페이지는 생성형 AI 도구를 활용해 제작되었습니다 · 데이터는 이 브라우저에만 저장됩니다</footer>
 
-    const menuData = [
-      { id: 0, title: "1. 수제 돈까스 & 쫄면", icon: "🍱" },
-      { id: 1, title: "2. 직화 제육덮밥", icon: "🥩" },
-      { id: 2, title: "3. 차돌된장찌개 & 비빔밥", icon: "🍲" }
-    ];
+<script>
+  const KEY = "dday-tasks-v3";
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
+  let currentFilter = "전체";
 
-    let selectedIndex = null;
+  // 저장된 데이터 불러오기(손상된 데이터면 빈 목록으로 시작)
+  function load() {
+    try {
+      const data = JSON.parse(localStorage.getItem(KEY) || "[]");
+      return Array.isArray(data) ? data : [];
+    } catch (e) {
+      return [];
+    }
+  }
+  let tasks = load();
 
-    // 오늘 날짜 표기 세팅
-    function initDate() {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = now.getMonth() + 1;
-      const date = now.getDate();
-      const days = ['일', '월', '화', '수', '목', '금', '토'];
-      const day = days[now.getDay()];
-      document.getElementById('currentDateText').textContent = `${year}년 ${month}월 ${date}일 (${day})`;
+  function save() {
+    localStorage.setItem(KEY, JSON.stringify(tasks));
+  }
+
+  // "2026-11-27"을 UTC가 아닌 '내 지역의 자정'으로 해석한다
+  function parseLocalDate(str) {
+    const [y, m, d] = str.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  function diffDays(dateStr) {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((parseLocalDate(dateStr) - today) / MS_PER_DAY);
+  }
+
+  function ddayLabel(diff) {
+    if (diff === 0) return "D-Day";
+    return diff > 0 ? "D-" + diff : "D+" + Math.abs(diff);
+  }
+
+  // 사용자 입력은 textContent로만 넣는다(XSS 방지)
+  function el(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function renderFilters() {
+    const box = document.getElementById("filters");
+    box.replaceChildren();
+    const subjects = ["전체", ...new Set(tasks.map(t => t.subject))];
+    if (!subjects.includes(currentFilter)) currentFilter = "전체";
+    subjects.forEach(s => {
+      const chip = el("button", "chip" + (s === currentFilter ? " active" : ""), s);
+      chip.type = "button";
+      chip.addEventListener("click", () => { currentFilter = s; render(); });
+      box.appendChild(chip);
+    });
+  }
+
+  function renderProgress() {
+    const total = tasks.length;
+    const done = tasks.filter(t => t.done).length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    document.getElementById("progressLabel").textContent = `${done} / ${total} (${pct}%)`;
+    document.getElementById("progressBar").style.width = pct + "%";
+  }
+
+  function renderList() {
+    const list = document.getElementById("list");
+    list.replaceChildren();
+    const visible = tasks
+      .filter(t => currentFilter === "전체" || t.subject === currentFilter)
+      .sort((a, b) => a.done - b.done || parseLocalDate(a.due) - parseLocalDate(b.due));
+
+    if (visible.length === 0) {
+      list.appendChild(el("li", "empty", "등록된 과제가 없습니다. 위에서 첫 과제를 추가해 보세요."));
+      return;
     }
 
-    // 투표 데이터 불러오기
-    function loadVotes() {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length === 3) {
-            return parsed;
-          }
-        } catch (e) {
-          console.error("데이터 복원 오류:", e);
-        }
-      }
-      return [0, 0, 0];
-    }
+    visible.forEach(t => {
+      const d = diffDays(t.due);
+      let state = "";
+      if (t.done) state = "done";
+      else if (d < 0) state = "past";
+      else if (d <= 3) state = "urgent";
 
-    // 투표 데이터 저장
-    function persistVotes(votes) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(votes));
-      renderChart();
-    }
+      const li = el("li", state);
+      const check = el("input");
+      check.type = "checkbox";
+      check.checked = t.done;
+      check.setAttribute("aria-label", t.title + " 완료");
+      check.addEventListener("change", () => { t.done = check.checked; save(); render(); });
 
-    // 메뉴 선택 핸들러
-    function selectMenu(index) {
-      selectedIndex = index;
-      const cards = document.querySelectorAll('.menu-card');
-      cards.forEach((card, idx) => {
-        if (idx === index) {
-          card.classList.add('selected');
-        } else {
-          card.classList.remove('selected');
+      const info = el("div", "info");
+      info.append(el("div", "title", t.title), el("div", "meta", `${t.subject} · ${t.due}`));
+
+      const del = el("button", "del", "삭제");
+      del.type = "button";
+      del.addEventListener("click", () => {
+        if (confirm(`'${t.title}' 과제를 삭제할까요?`)) {
+          tasks = tasks.filter(x => x.id !== t.id);
+          save(); render();
         }
       });
-      showToast('');
-    }
 
-    // 투표 제출
-    function castVote() {
-      if (selectedIndex === null) {
-        showToast('투표하실 메뉴를 먼저 터치해 주세요!', '#ef4444');
-        return;
-      }
-
-      const votes = loadVotes();
-      votes[selectedIndex] += 1;
-      persistVotes(votes);
-
-      const targetTitle = menuData[selectedIndex].title;
-      showToast(`'${targetTitle}'에 소중한 한 표가 반영되었습니다! 🎉`, 'var(--primary)');
-    }
-
-    // 차트 렌더링
-    function renderChart() {
-      const votes = loadVotes();
-      const total = votes.reduce((acc, cur) => acc + cur, 0);
-      const container = document.getElementById('chartContainer');
-      const maxVote = Math.max(...votes);
-
-      container.innerHTML = menuData.map((menu, i) => {
-        const count = votes[i];
-        const percent = total > 0 ? Math.round((count / total) * 100) : 0;
-        const isLeading = total > 0 && count === maxVote && count > 0;
-
-        return `
-          <div class="bar-item">
-            <div class="bar-label-row">
-              <span class="bar-label-name">
-                <span>${menu.icon}</span>
-                <span>${escapeHtml(menu.title)}</span>
-              </span>
-              <span class="bar-label-stats">
-                ${percent}%
-                <span class="bar-votes-count">(${count}표)</span>
-              </span>
-            </div>
-            <div class="track">
-              <div 
-                class="bar-fill ${isLeading ? 'leading' : ''}" 
-                style="width: ${percent}%;"
-                title="${count}표"
-              ></div>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      document.getElementById('totalVotes').textContent = `${total.toLocaleString()}표`;
-    }
-
-    // 알림 메시지 제어
-    function showToast(message, color = 'var(--primary)') {
-      const toast = document.getElementById('toastMessage');
-      toast.style.color = color;
-      toast.textContent = message;
-    }
-
-    // 결과 초기화
-    function confirmResetVotes() {
-      const sure = window.confirm("투표 결과를 모두 0으로 초기화할까요?");
-      if (sure) {
-        persistVotes([0, 0, 0]);
-        selectedIndex = null;
-        document.querySelectorAll('.menu-card').forEach(card => card.classList.remove('selected'));
-        showToast('결과가 깨끗하게 리셋되었습니다.', 'var(--text-muted)');
-      }
-    }
-
-    // HTML 태그 이스케이프 유틸
-    function escapeHtml(str) {
-      const div = document.createElement('div');
-      div.innerText = str;
-      return div.innerHTML;
-    }
-
-    // 초기 실행
-    document.addEventListener('DOMContentLoaded', () => {
-      initDate();
-      renderChart();
+      li.append(check, info, el("div", "dday", ddayLabel(d)), del);
+      list.appendChild(li);
     });
-  </script>
+  }
+
+  function render() {
+    renderFilters();
+    renderProgress();
+    renderList();
+  }
+
+  document.getElementById("taskForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const title = document.getElementById("title").value.trim();
+    const subject = document.getElementById("subject").value.trim() || "기타";
+    const due = document.getElementById("due").value;
+    const error = document.getElementById("error");
+
+    if (!title) { error.textContent = "과제명을 입력해 주세요."; return; }
+    if (!due) { error.textContent = "마감일을 선택해 주세요."; return; }
+    error.textContent = "";
+
+    tasks.push({ id: Date.now().toString(36), title, subject, due, done: false });
+    save();
+    e.target.reset();
+    render();
+  });
+
+  render();
+</script>
 </body>
 </html>
